@@ -318,7 +318,8 @@ body.audioEditor .container {
 #selectMusicDiv {
   display: flex;
   flex-direction: row;
-  column-gap: 2em;
+  column-gap: 1em;
+  row-gap: 1em;
   flex-wrap: wrap;
 }
 
@@ -326,6 +327,10 @@ body.audioEditor .container {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 0em 1em;
+}
+
+#sampleMusicOptions {
+  margin-bottom: 1em;
 }
 
 #sampleMusicOptions button {

@@ -11,32 +11,32 @@ It allows you to create personalized baseball montages. Select a regular season 
 **STEP 1: Game On!**<br>
 Select a game from the dropdown.
 
-<div style="max-width: 720px">
-    <img src="./readme-assets/homePage.png">
+<div style="max-width: 480p">
+    <img src="https://github.com/mehradotdev/mlb-montage-maker/blob/main/readme-assets/homePage.png">
 </div>
 <br>
 
 **STEP 2: Drop the Beat (and Your Song)**<br>
 Upload your song and visually mark the beats.
 
-<div style="max-width: 720px">
-    <img src="./readme-assets/beatEditor.png">
+<div style="max-width: 480p">
+    <img src="https://github.com/mehradotdev/mlb-montage-maker/blob/main/readme-assets/beatEditor.png">
 </div>
 <br>
 
 **STEP 3: ????**<br>
 This is where the AI Sorcery happens. Our Google Gemini-powered backend works its magic. Montage creation in progress!
 
-<div style="max-width: 720px">
-    <img src="./readme-assets/montageViewerProcessing.png">
+<div style="max-width: 480p">
+    <img src="https://github.com/mehradotdev/mlb-montage-maker/blob/main/readme-assets/montageViewerProcessing.png">
 </div>
 <br>
 
 **STEP 4: PROFIT!!!**<br>
 Behold! Your baseball montage, perfectly synced to your chosen beats. Download it, share it, become a legend! 😆
 
-<div style="max-width: 720px">
-    <img src="./readme-assets/montageViewerSuccess.png">
+<div style="max-width: 480p">
+    <img src="https://github.com/mehradotdev/mlb-montage-maker/blob/main/readme-assets/montageViewerSuccess.png">
 </div>
 
 ## Usage:
