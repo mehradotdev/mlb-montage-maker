@@ -1,0 +1,34 @@
+[
+  {
+    "gamePk": 745444,
+    "officialDate": "2024-03-20",
+    "awayTeamName": "Los Angeles Dodgers",
+    "homeTeamName": "San Diego Padres",
+    "mp4Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-03/20/38134c85-41a33a2e-034c44a2-csvm-diamondx64-asset_1280x720_59_4000K.mp4",
+    "m3u8Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-03/20/38134c85-41a33a2e-034c44a2-csvm-diamondx64-asset.m3u8"
+  },
+  {
+    "gamePk": 746302,
+    "officialDate": "2024-06-07",
+    "awayTeamName": "Seattle Mariners",
+    "homeTeamName": "Kansas City Royals",
+    "mp4Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-06/07/858a0ae0-b50a388f-0ed1fa65-csvm-diamondx64-asset_1280x720_59_4000K.mp4",
+    "m3u8Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-06/07/858a0ae0-b50a388f-0ed1fa65-csvm-diamondx64-asset.m3u8"
+  },
+  {
+    "gamePk": 746111,
+    "officialDate": "2024-08-23",
+    "awayTeamName": "Tampa Bay Rays",
+    "homeTeamName": "Los Angeles Dodgers",
+    "mp4Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-08/23/3610e24c-30589c3b-ca8911e8-csvm-diamondx64-asset_1280x720_59_4000K.mp4",
+    "m3u8Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-08/23/3610e24c-30589c3b-ca8911e8-csvm-diamondx64-asset.m3u8"
+  },
+  {
+    "gamePk": 747064,
+    "officialDate": "2024-09-30",
+    "awayTeamName": "New York Mets",
+    "homeTeamName": "Atlanta Braves",
+    "mp4Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-09/30/5335f498-96763047-40666257-csvm-diamondgcp-asset_1280x720_59_4000K.mp4",
+    "m3u8Url": "https://mlb-cuts-diamond.mlb.com/FORGE/2024/2024-09/30/5335f498-96763047-40666257-csvm-diamondgcp-asset.m3u8"
+  }
+]

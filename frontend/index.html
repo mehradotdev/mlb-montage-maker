@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLB Montage Maker</title>
+  <link rel="stylesheet" href="./assetz/styles/global-style.css">
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+  <style>
+    .github-fork-ribbon:before {
+      background-color: #072669;
+    }
+
+    #mainHeading {
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: xx-large;
+    }
+  </style>
+</head>
+
+<body class="index">
+  <div class="container">
+    <h1 id="mainHeading">MLB Montage Maker using Gemini AI</h1>
+
+    <p>
+      Select a regular season baseball game from dropdown. After selecting a game, you can proceed to add your own
+      song and mark beat timestamps.
+    </p>
+    <p>These timestamps will guide the AI to create cuts and synchronize your montage with the music beats. </p>
+    <p>Click "Create Montage" to start creating your AI-generated MLB montage! </p>
+
+    <div class="form-group">
+      <!-- <label for="gameSelect">Select a game:</label> -->
+      <select id="gameSelect">
+        <option value="">Loading games...</option>
+      </select>
+    </div>
+
+    <!-- Video element for HLS player -->
+    <video id="hlsPlayer" controls width="640" height="360"></video>
+    <button id="selectMusicButton" disabled>Create My Montage! 🚀</button>
+    <a class="github-fork-ribbon" href="https://github.com/mehradotdev/mlb-montage-maker" target="_blank"
+      data-ribbon="View code on GitHub" title="View code on GitHub">View code on GitHub</a>
+  </div>
+
+  <script type="module">
+    import createHlsPlayer from './assetz/js/hlsPlayer.js';
+
+    let gameData = []; // Store loaded game data
+    let currentPlayer = null; // To store the current HLS player instance
+    const selectMusicButton = document.getElementById('selectMusicButton'); // Get the button
+
+    async function populateGames() {
+      try {
+        const response = await fetch('/mlb_games_2024.json'); // Fetch local JSON file
+        if (!response.ok) {
+          throw new Error(`Failed to load game data: ${response.status}`);
+        }
+        gameData = await response.json(); // Parse JSON data
+        const gameSelect = document.getElementById("gameSelect");
+        gameSelect.innerHTML = ""; // Clear loading message
+
+        if (gameData && gameData.length > 0) {
+          gameSelect.innerHTML = "<option value=''>Select a game</option>";
+
+          gameData.forEach(game => {
+            const option = document.createElement("option");
+            option.value = game.gamePk;
+            option.text = `${game.officialDate} - ${game.awayTeamName} @ ${game.homeTeamName}`;
+            gameSelect.add(option);
+          });
+        } else {
+          gameSelect.innerHTML = "<option value=''>No games found</option>";
+        }
+
+      } catch (error) {
+        console.error("Error loading game data:", error);
+        document.getElementById("gameSelect").innerHTML =
+          "<option value=''>Error loading games</option>";
+      }
+    }
+
+    document
+      .getElementById("gameSelect")
+      .addEventListener("change", function () { // Changed to 'change' event on gameSelect
+        const gamePk = this.value; // 'this' refers to gameSelect element
+        const hlsPlayerElement = document.getElementById('hlsPlayer');
+        const selectedGame = gameData.find(game => game.gamePk === parseInt(gamePk)); // Find game in loaded data
+        const mp4Url = selectedGame.mp4Url;
+        const m3u8Url = selectedGame.m3u8Url;
+
+        // Re-setting player instance
+        if (currentPlayer) {
+          currentPlayer.destroy(); // Destroy existing player instance
+          currentPlayer = null;
+        }
+
+        if (!gamePk || !selectedGame || !m3u8Url) {
+          hlsPlayerElement.style.display = 'none'; // Hide player if no game selected
+          selectMusicButton.disabled = true; // Disable button if no game selected
+          return;
+        }
+
+        hlsPlayerElement.style.display = 'block'; // Show player
+        currentPlayer = createHlsPlayer(m3u8Url, 'hlsPlayer'); // Create and store new player instance
+        selectMusicButton.disabled = false; // Enable button when game is selected
+      });
+
+    // --- "Select Music" Button Event Listener ---
+    selectMusicButton.addEventListener('click', () => {
+      const gamePk = document.getElementById('gameSelect').value;
+      const gameSelectElement = document.getElementById('gameSelect');
+      const selectedOption = gameSelectElement.options[gameSelectElement.selectedIndex];
+      const gameName = selectedOption.text;
+
+      if (gamePk && gameName) {
+        // Encode the gameName to be URL-safe (important for spaces and special characters)
+        const encodedGameName = encodeURIComponent(gameName);
+        window.location.href = `beat-editor/?gamePk=${gamePk}&gameName=${encodedGameName}`;
+      } else {
+        alert("Please select a game first.");
+      }
+    });
+
+
+    populateGames(); // Populate the dropdown on page load
+  </script>
+</body>
+
+</html>

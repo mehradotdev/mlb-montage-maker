@@ -1,0 +1,707 @@
+/* CSS Reset - Keep this for browser consistency */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ol,
+ul {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- CSS Variables (Theme) --- */
+:root {
+  --primary-color: #64b5f6; /* Primary blue */
+  --primary-color-darker: #42a5f5; /* Darker primary blue for hover */
+  --secondary-color: #a8dadc; /* Secondary light blue-green */
+  --secondary-color-darker: #77aca2; /* Darker secondary blue-green for hover */
+  --text-color-dark: #1a1a1a; /* Dark grey text */
+  --text-color-light: #242424; /* Lighter grey text */
+  --background-color-light: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  --background-color-overlay: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+  --border-color: #777777; /* Light grey border */
+  --border-radius: 8px; /* Button and container border radius */
+  --font-family-base: "Nunito", sans-serif; /* Base font */
+  --box-shadow-default: 5px 5px 7px rgba(0, 0, 0, 0.6); /* Default box shadow */
+}
+
+/* --- Global Body and Container Styles --- */
+body {
+  font-family: var(--font-family-base);
+  margin: 0;
+  padding: 20px;
+  color: var(--text-color-dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--background-color-light); /* Default background */
+}
+
+.container {
+  width: 90%;
+  max-width: 800px;
+  padding: 20px;
+  background-color: var(--background-color-light);
+  border-radius: 12px; /* Slightly larger container radius */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center; /* Default text alignment */
+}
+
+/* --- Global Typography --- */
+h1,
+h3,
+h4 {
+  color: var(--text-color-dark); /* Consistent heading color */
+  margin-bottom: 15px;
+}
+
+h3 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  color: var(--text-color-dark); /* Slightly lighter for h3 */
+  font-weight: bold; /* Make h3 bold globally */
+}
+
+h4 {
+  font-size: 1.2em;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: var(--text-color-light); /* Even lighter for h4 */
+}
+
+p {
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #555; /* Slightly darker label color */
+}
+
+/* --- Global Form Element Styles --- */
+input[type="text"],
+input[type="file"],
+input[type="range"],
+select {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  font-size: 1em;
+}
+
+select {
+  width: 100%;
+  max-width: 300px;
+  border-color: var(--primary-color); /* Highlight select border */
+}
+
+input[type="file"] {
+  margin-top: 10px;
+  padding: 8px; /* Adjust file input padding if needed */
+}
+
+input[type="range"] {
+  width: 100%;
+  max-width: 150px;
+}
+
+/* --- Global Button Styles --- */
+button {
+  padding: 12px 18px;
+  background-color: var(
+    --secondary-color
+  ); /* Using secondary color for default buttons */
+  color: var(--text-color-dark);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Added color transition */
+  font-size: 1em;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: var(
+    --secondary-color-darker
+  ); /* Darker secondary on hover */
+  color: white; /* White text on hover for better contrast */
+}
+
+button:disabled {
+  background-color: #e0e0e0;
+  color: #777777;
+  cursor: not-allowed;
+}
+
+/* --- Page Specific Styles --- */
+
+/* index.html - Homepage Styles */
+body.index {
+  background-image: url("../img/stadium.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative; /* Required for pseudo-element positioning */
+}
+
+/* Semi-transparent black overlay for background image */
+body.index::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Adjust opacity (0.4) to control dimness */
+  z-index: -1; /* Place overlay behind the body content */
+}
+
+#hlsPlayer, #montageVideoPlayer {
+  display: none;
+  margin: 20px auto;
+  max-width: 100%;
+  height: auto;
+  border: 2px solid var(--primary-color); /* Primary color border for video */
+  border-radius: var(--border-radius);
+}
+
+#selectMusicButton {
+  background-color: var(
+    --primary-color
+  ); /* Primary color for main action button */
+}
+
+#selectMusicButton:hover {
+  background-color: var(--primary-color-darker);
+}
+
+/* audioEditor.html - Audio Editor Styles */
+body.audioEditor {
+  background-image: url("../img/balls.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative; /* Required for pseudo-element positioning */
+}
+
+/* Semi-transparent black overlay for background image */
+body.audioEditor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Adjust opacity (0.4) to control dimness */
+  z-index: -1; /* Place overlay behind the body content */
+}
+
+body.audioEditor .container {
+  text-align: left; /* Override global text-align: center for audioEditor */
+  max-width: inherit; /* Allow container to expand if needed */
+  position: relative; /* For positioning info button */
+}
+
+/* Info Button Style */
+#infoButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  color: var(--text-color-light);
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+#infoButton:hover {
+  opacity: 1;
+}
+
+/* --- Modal Styles --- */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 100; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+  align-content: center;
+}
+
+.modal-content {
+  background-color: var(--background-color-light); /* White background */
+  margin: auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  width: 80%; /* Could be more or less, depending on screen size */
+  max-width: 600px; /* Maximum width for the modal content */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative; /* To position close button */
+  text-align: left; /* Left align text inside modal */
+}
+
+.close-button {
+  color: #aaa;
+  position: absolute;
+  top: 0;
+  right: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-content h3 {
+  margin-top: 0; /* Reset top margin for modal heading */
+  margin-bottom: 15px;
+}
+
+.modal-content p {
+  margin-bottom: 10px;
+}
+
+.modal-content ul {
+  padding-left: 20px;
+  margin-bottom: 15px;
+}
+
+.modal-content li {
+  margin-bottom: 5px;
+}
+
+.do-not-show-again {
+  margin-top: 20px;
+  display: flex;
+  align-items: center; /* Vertically align checkbox and label */
+  gap: 10px; /* Space between checkbox and label */
+}
+
+#selectMusicDiv {
+  display: flex;
+  flex-direction: row;
+  column-gap: 2em;
+  flex-wrap: wrap;
+}
+
+#selectMusicDiv section {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0em 1em;
+}
+
+#sampleMusicOptions button {
+  background-color: #e0e0e0; /* Light grey for sample music buttons */
+  color: var(--text-color-dark);
+  padding: 10px 15px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+  box-shadow: var(
+    --box-shadow-default
+  ); /* Added box-shadow to sample music buttons */
+}
+
+#sampleMusicOptions button:hover {
+  background-color: #d0d0d0; /* Slightly darker grey on hover */
+}
+
+#waveform {
+  border: 1px solid var(--border-color);
+  margin-top: 20px;
+  border-radius: var(--border-radius);
+}
+
+/* Waveform Parts - Keep customization if needed */
+#waveform ::part(marker) {
+  border: 0px solid #ff0c0c;
+  cursor: default;
+}
+
+#waveform ::part(region-content) {
+  transform: translateX(-50%);
+  padding: 0;
+  cursor: grab;
+  margin-top: 0;
+  font-size: 1.5em;
+}
+
+#waveform ::part(cursor) {
+  border-radius: 0.5em;
+  border: 1px solid #00000000;
+}
+
+#waveform ::part(cursor):after {
+  content: "▲";
+  font-size: 1.5em;
+  position: absolute;
+  left: 0;
+  top: -28px;
+  transform: translateX(-50%);
+  margin-top: 32vh;
+}
+
+#waveform ::part(region-handle-left) {
+  border-left-width: 0.5em;
+  border-left-color: #8d8400;
+}
+
+#waveform ::part(region-handle-right) {
+  border-right-width: 0.5em;
+  border-right-color: #8d8400;
+}
+
+#audioControls {
+  display: flex;
+  flex-direction: column;
+  /* align-items: center; */
+  padding-top: 1em;
+  row-gap: 1em;
+  margin-top: 20px;
+}
+
+#audioControls.controls-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1em;
+  width: 100%;
+  /* max-width: 700px; */
+}
+
+#audioControls button {
+  flex: 1;
+  min-width: 100px;
+}
+
+#playbackSlider {
+  width: 11em;
+}
+
+#zoomDiv,
+#playbackDiv {
+  margin-bottom: 10px;
+  /* display: flex; */
+  flex-direction: column;
+  align-items: center;
+}
+
+#lockRegionDiv {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  column-gap: 0.5em;
+}
+
+#generateButtonContainer {
+  justify-content: center;
+  margin-top: 1em;
+  display: flex;
+}
+
+#generateButtonContainer button {
+  width: 100%;
+  box-shadow: var(
+    --box-shadow-default
+  ); /* Added box-shadow to generate montage button */
+  background-color: var(
+    --primary-color
+  ); /* Set background color to primary for generate button */
+}
+
+/* montageVideo.html - Montage Video Page Styles */
+body.montageVideo {
+  background-image: url("../img/ball.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative; /* Required for pseudo-element positioning */
+}
+
+/* Semi-transparent black overlay for background image */
+body.montageVideo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Adjust opacity (0.4) to control dimness */
+  z-index: -1; /* Place overlay behind the body content */
+}
+
+#montageTitle {
+  margin-bottom: 10px;
+}
+
+#videoPlaceholder {
+  width: 80%;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #eee; /* Placeholder background color */
+  aspect-ratio: 16/9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+#videoPlaceholder.ready {
+  background-color: transparent;
+}
+
+#videoPlaceholder video {
+  width: 100%;
+  height: 100%;
+}
+
+#generatingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(
+    --background-color-overlay
+  ); /* Using variable for overlay */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--primary-color); /* Primary color border for video */
+  border-radius: var(--border-radius);
+}
+
+.loader {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid var(--primary-color); /* Primary color loader */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#progressMessage {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+#montageProgressLvlDisplay {
+  font-size: 1em;
+  margin-bottom: 10px;
+  color: #ddd; /* Light grey progress text */
+}
+
+#errorDisplay {
+  color: red;
+  margin-top: 20px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center; /* Center buttons horizontally */
+  align-items: center; /* Vertically align items in container */
+  gap: 20px; /* Space between buttons */
+  margin-top: 15px; /* Space above buttons */
+  flex-direction: row; /* Arrange buttons in a row by default */
+  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.button-container a, /* Style for Download button (anchor tag) */
+.button-container button { /* Style for New Montage button */
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none; /* Remove underline from Download button */
+  display: inline-block; /* Ensure consistent spacing */
+  text-align: center; /* Center text within buttons */
+  min-width: 150px; /* Minimum width for buttons */
+  box-sizing: border-box; /* Ensure padding is included in width */ /* Important for consistent sizing */
+  margin-bottom: 0; /* Reset any bottom margin that might cause misalignment */
+}
+
+#downloadButton {
+  /* padding: 10px 20px; */
+  background-color: #4caf50; /* Green download button */
+  color: white;
+  /* border: none; */
+  /* border-radius: 5px; */ /* Different radius for download button */
+  /* cursor: pointer; */
+  /* text-decoration: none; */
+  /* display: none; */
+  /* margin: 15px auto;  */ /* Centered download button */
+  /* width: fit-content; */  /* Fit content for download button width */
+  /* margin-bottom: 5px; */  /* Add a little space below the download button */
+}
+
+#downloadButton:hover {
+  background-color: #45a049;
+}
+
+#newMontageButton { /* New Montage button specific styles */
+  background-color: var(--secondary-color); /* Use secondary color */
+  color: var(--text-color-dark);
+  border: none; /* Remove default border */
+}
+
+#newMontageButton:hover { /* New Montage button hover styles */
+  background-color: var(--secondary-color-darker);
+  color: white;
+}
+
+/* Video Deletion Warning Message Styles */
+#videoDeletionWarning {
+  color: #861d1d; /* Eye-catching red color */
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-top: 5px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: rgba(255, 235, 205, 0.3); /* Light orange background for emphasis */
+  border: 1px solid #ffb347; /* Orange border */
+  border-radius: var(--border-radius);
+  text-align: center; /* Center align the text */
+}
+
+
+/* --- Responsive Design - Media Queries --- */
+@media (min-width: 768px) {
+  /* Tablets and larger */
+  .container {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Mobile devices */
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .modal-content {
+    width: 95%; /* Wider modal on small screens */
+    margin-top: 10%; /* Adjust top margin on small screens */
+    padding: 15px; /* Slightly less padding on small screens */
+  }
+  .modal-content h3 {
+    font-size: 1.3em; /* Slightly smaller heading on mobile */
+  }
+
+  #audioControls .controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #audioControls button {
+    margin-bottom: 10px;
+    min-width: auto;
+  }
+
+  #zoomDiv,
+  #playbackDiv,
+  #lockRegionDiv {
+    margin-bottom: 20px;
+  }
+
+  #waveform {
+    margin-top: 10px;
+    border-radius: 0;
+  }
+
+  #hlsPlayer,
+  #videoPlaceholder {
+    margin: 10px auto;
+  }
+
+  .button-container {
+    flex-direction: column; /* Stack buttons on mobile */
+    align-items: center; /* Center buttons when stacked */
+    gap: 10px; /* Reduced gap when stacked */
+  }
+
+  .button-container a,
+  .button-container button {
+    width: 100%; /* Full width buttons on mobile */
+    min-width: auto; /* Allow full width */
+    margin-bottom: 10px; /* Add margin between stacked buttons */
+  }
+
+  #downloadButton {
+    margin: 15px 20px;
+    width: calc(100% - 40px);
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  #videoDeletionWarning {
+    font-size: 0.85em; /* Slightly smaller font on mobile */
+    padding: 8px; /* Slightly less padding on mobile */
+    margin-bottom: 15px; /* Adjust bottom margin on mobile */
+  }
+
+  #selectMusicDiv {
+    flex-direction: column; /* Stack sections in selectMusicDiv on mobile */
+    column-gap: 0; /* Remove column gap when stacked */
+    row-gap: 1em; /* Add row gap between stacked sections */
+  }
+}

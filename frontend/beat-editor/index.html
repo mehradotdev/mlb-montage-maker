@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLB Montage Maker - Beat Edit</title>
+  <link rel="stylesheet" href="../assetz/styles/global-style.css">
+  <style>
+    h3 span {
+      font-weight: normal;
+    }
+
+    #playPauseButton {
+      background-color: #e0e0e0;
+      max-width: 1em;
+      border: 1px solid black;
+      margin: 0.5em;
+      box-shadow: var(--box-shadow-default);
+    }
+
+    #playPauseButton:hover {
+      background-color: #d0d0d0; /* Slightly darker grey on hover */
+      color: #1a1a1a;
+    }
+  </style>
+</head>
+
+<body class="audioEditor">
+  <div class="container">
+    <button id="infoButton">ⓘ</button> <!-- Info Button -->
+
+    <!-- Rest of your audioEditor.html content (gameNameDisplay, musicNameDisplay, etc.) -->
+    <h3 id="gameNameDisplay">Game: <span id="gameNameText">Loading...</span></h3>
+    <h3 id="musicNameDisplay">Music used: <span id="musicNameText">Not selected...</span></h3>
+
+    <div id="selectMusicDiv">
+      <section id="sampleMusicSection">
+        <h4>Sample Music (Quick try)</h4>
+        <div id="sampleMusicOptions">
+          <button data-track="believe">Believe (Instrumental) - NEFFEX</button>
+          <button data-track="hows-it-supposed-to-feel">How's It Supposed to Feel (Instrumental) - NEFFEX</button>
+        </div>
+      </section>
+
+      <section id="customMusicSection">
+        <h4>Or... Upload Your own Music</h4>
+        <input id="audioFile" type="file" accept="audio/*" />
+      </section>
+    </div>
+
+    <div id="waveform"></div>
+
+    <div id="audioControls" class="controls-row">
+      <button id="playPauseButton" disabled="true">▶</button>
+      <div id="lockRegionDiv">
+        <input type="checkbox" id="lockRegionCheckbox" disabled>
+        <label for="lockRegionCheckbox">Lock Region</label>
+      </div>
+
+      <div id="zoomDiv">
+        <label for="zoomSLider">Zoom: <span id="zoomLabel">100</span>% </label>
+        <input id="zoomSlider" type="range" min="0" max="150" value="0" disabled="true" />
+      </div>
+
+      <div id="playbackDiv">
+        <label for="playbackSlider"> Playback rate: <span id="rateLabel">1</span>x </label>
+        <input id="playbackSlider" type="range" min="0.25" max="2" step="0.05" value="1" disabled="true" />
+      </div>
+
+      <button id="markBeatButton" disabled="true">Mark Beat</button>
+      <button id="deleteMarkerButton" disabled="true">Delete Marker</button>
+      <button id="deleteAllMarkersButton" disabled>Delete All Markers</button>
+      <button id="exportButton" disabled>Export Beats Timestamp</button>
+    </div>
+    <div id="generateButtonContainer">
+      <button id="generateMontageButton" disabled>Generate Montage</button>
+    </div>
+
+    <!-- Modal Popup Structure -->
+    <div id="infoModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-button" id="closeModalButton">×</span>
+        <h3>Important Information - Beat Editor</h3>
+        <p>Welcome to the Beat Editor! Please read the following information before you start:</p>
+        <ul>
+          <li><strong>Reel Length:</strong> When you trim the reel region, ensure it is between 25 and 60 seconds in
+            duration.</li>
+          <li><strong>Audio File Requirements:</strong>
+            <ul>
+              <li>Your uploaded audio file should be longer than 30 seconds but shorter than 15 minutes.</li>
+              <li>Maximum file size is 100 MB.</li>
+            </ul>
+          </li>
+          <li><strong>Keyboard Shortcuts:</strong> Enhance your workflow with these shortcuts:
+            <ul>
+              <li><strong>Spacebar:</strong> Play/Pause</li>
+              <li><strong>F:</strong> Mark Beat</li>
+              <li><strong>A:</strong> Delete Selected Marker</li>
+              <li><strong>W/E:</strong> Zoom Out/In Timeline</li>
+              <li><strong>S/D:</strong> Slow Down/Speed Up Playback</li>
+              <li><strong>R:</strong> Reset Playback Speed & Zoom</li>
+              <li><strong>Q:</strong> Toggle Lock Reel Region</li>
+            </ul>
+          </li>
+        </ul>
+        <div class="do-not-show-again">
+          <input type="checkbox" id="doNotShowAgainCheckbox">
+          <label for="doNotShowAgainCheckbox">Do not show me this again</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <script type="module"> // Inline script to handle URL parameters
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const gameName = urlParams.get('gameName');
+      const gameNameDisplay = document.getElementById('gameNameText');
+
+      if (gameName) {
+        // Decode the URL-encoded gameName
+        const decodedGameName = decodeURIComponent(gameName);
+        gameNameDisplay.textContent = `${decodedGameName}`;
+      } else {
+        gameNameDisplay.textContent = 'Not specified'; // Or handle no game name case as needed
+      }
+    });
+  </script>
+  <script type="module" src="./beat-editor.js"></script>
+  <script type="module">
+    // JavaScript for Modal Popup Logic
+
+    const infoModal = document.getElementById('infoModal');
+    const infoButton = document.getElementById('infoButton');
+    const closeModalButton = document.getElementById('closeModalButton');
+    const doNotShowAgainCheckbox = document.getElementById('doNotShowAgainCheckbox');
+
+    const modalCookieName = 'hideAudioEditorInfoModal';
+
+    function setCookie(name, value, days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + date.toUTCString();
+      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+          c = c.substring(1, c.length);
+        }
+        if (c.indexOf(nameEQ) === 0) {
+          return c.substring(nameEQ.length, c.length);
+        }
+      }
+      return null;
+    }
+
+    function shouldShowModal() {
+      return !getCookie(modalCookieName);
+    }
+
+    function hideModal() {
+      infoModal.style.display = "none";
+    }
+
+    function showModal() {
+      infoModal.style.display = "block";
+    }
+
+    // Event listeners
+    infoButton.addEventListener('click', showModal);
+    closeModalButton.addEventListener('click', hideModal);
+
+    doNotShowAgainCheckbox.addEventListener('change', function () {
+      if (this.checked) {
+        setCookie(modalCookieName, 'true', 7); // Set cookie for 7 days
+      } else {
+        // If unchecked, you might want to remove the cookie, but for simplicity, we'll just leave it.
+        // If you need to re-enable the popup every time after unchecking, cookie removal logic would be needed.
+      }
+      hideModal(); // Close modal after checking/unchecking
+    });
+
+    window.addEventListener('click', function (event) {
+      if (event.target === infoModal) {
+        hideModal(); // Close modal if clicked outside of it
+      }
+    });
+
+    // Show modal on page load if cookie is not set
+    if (shouldShowModal()) {
+      showModal();
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLB Montage Make - Montage Viewer</title>
+  <link rel="stylesheet" href="../assetz/styles/global-style.css">
+</head>
+
+<body class="montageVideo">
+  <div class="container">
+    <h1 id="montageTitle">Generating Your Baseball Montage!</h1>  <!-- Added ID here -->
+  
+    <p id="videoDeletionWarning" style="display: none;"></p>
+
+    <div id="videoPlaceholder">
+      <div id="generatingOverlay">
+        <div class="loader"></div>
+        <p id="progressMessage">Initializing montage creation...</p>
+        <p id="montageProgressLvlDisplay" style="display: none;">Montage progress: 0% completed...</p> <!-- Progress display -->
+        <p id="encouragingMessage"></p>
+      </div>
+      <video id="montageVideoPlayer" controls style="display: none;"></video>
+    </div>
+
+    <div class="button-container">
+      <a id="downloadButton" href="#" style="display: none;" target="_blank" download="baseball_montage.mp4">Download Montage ⏬</a> <!-- Download button -->
+      <button id="newMontageButton" style="display: none;">Make Another 🔥 Montage?</button> <!-- New Montage Button -->
+    </div>
+  
+    <div id="errorDisplay" style="display: none;"></div>
+  </div>
+
+  <script type="module">
+    import { startMontageStatusPolling } from './montage-viewer.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const runId = urlParams.get('runId');
+
+      if (!runId) {
+        document.getElementById('errorDisplay').textContent = "Error: runId is missing.";
+        document.getElementById('errorDisplay').style.display = 'block';
+        document.getElementById('generatingOverlay').style.display = 'none'; // Hide loader
+        return;
+      }
+
+      startMontageStatusPolling(runId);
+
+      // --- New Montage Button Event Listener ---
+      const newMontageButton = document.getElementById('newMontageButton');
+      newMontageButton.addEventListener('click', () => {
+        window.location.href = window.location.origin; // Redirect to index.html
+      });
+    });
+  </script>
+</body>
+
+</html>
