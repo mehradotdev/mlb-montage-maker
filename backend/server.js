@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 3000;
 const FRAME_RATE = 59.94;
 const FRAME_DURATION = 1 / FRAME_RATE;
 const GCP_PROJECT_ID = 'mlb-montage-maker';
+const GCP_BUCKET_ID = 'mlb-montage-maker';
+const GCP_REGION = 'us-central1';
 const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'assets', 'system-prompt.txt'), 'utf8');
 
 const app = express();
@@ -31,7 +33,7 @@ const modelGenerationConfig = {
 };
 
 // Initialize Vertex AI client
-const vertexAI = new VertexAI({ project: GCP_PROJECT_ID, location: 'us-central1' });
+const vertexAI = new VertexAI({ project: GCP_PROJECT_ID, location: GCP_REGION });
 const generativeModel = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp', systemInstruction: SYSTEM_PROMPT, generationConfig: modelGenerationConfig });
 
 // Directory configuration
@@ -220,6 +222,28 @@ function cleanupRun(runId, outputPath, audioFilePath = null) {
   }, 10 * 60 * 1000); // 10 minutes
 }
 
+/**
+ * Empties the downloads directory at server startup.
+ */
+function emptyDownloadsFolder() {
+  const downloadsPath = directories.outputVideos;
+  if (fs.existsSync(downloadsPath)) {
+    const files = fs.readdirSync(downloadsPath);
+    for (const file of files) {
+      const filePath = path.join(downloadsPath, file);
+      try {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted file from downloads: ${filePath}`);
+      } catch (err) {
+        console.error(`Error deleting file from downloads: ${filePath}`, err);
+      }
+    }
+    console.log('Downloads folder emptied on server start.');
+  } else {
+    console.log('Downloads folder does not exist, skipping cleanup.');
+  }
+}
+
 
 // --------------------------
 // Video Processing Functions
@@ -397,7 +421,7 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
 
     const { gamePk, reelRegion, beatMarkers, musicName } = montageData;
     const audioPath = req.file?.path || path.join(directories.assets, 'music', musicName);
-    const sourceVideoGCSUrl = `gs://${GCP_PROJECT_ID}/source_${gamePk}_480p.mp4`;
+    const sourceVideoGCSUrl = `gs://${GCP_BUCKET_ID}/source_${gamePk}_480p.mp4`;
     const sourceVideo = path.join(directories.assets, 'videos', `source_${gamePk}_480p.mp4`);
 
     if (!fs.existsSync(audioPath)) throw new Error('Audio file not found');
@@ -530,6 +554,10 @@ app.get('/areYouAlive', (req, res) => {
 // --------------------------
 // Server Initialization
 // --------------------------
+
+// Empty downloads folder on server start
+emptyDownloadsFolder();
+
 app.listen(PORT, () => {
   // console.log(`Montage server running on http://localhost:${PORT}`);
   console.log(`Montage server running on port ${PORT}`);
