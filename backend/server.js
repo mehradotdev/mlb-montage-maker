@@ -82,7 +82,8 @@ const corsOptions = {
   //   }
   // }
 }
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+app.use(cors());
 const upload = multer({
   storage: multer.diskStorage({
     destination: directories.uploads,
@@ -250,23 +251,27 @@ function cleanupRun(runId, outputPath, audioFilePath = null) {
 /**
  * Empties the downloads directory at server startup.
  */
-function emptyDownloadsFolder() {
-  const downloadsPath = directories.outputVideos;
-  if (fs.existsSync(downloadsPath)) {
-    const files = fs.readdirSync(downloadsPath);
-    for (const file of files) {
-      const filePath = path.join(downloadsPath, file);
-      try {
-        fs.unlinkSync(filePath);
-        console.log(`Deleted file from downloads: ${filePath}`);
-      } catch (err) {
-        console.error(`Error deleting file from downloads: ${filePath}`, err);
+function emptyFoldersOnInitialLoad() {
+  const folderPathList = [directories.outputVideos, directories.uploads];
+
+  folderPathList.forEach((folder) => {
+    if (fs.existsSync(folder)) {
+      const files = fs.readdirSync(folder);
+      for (const file of files) {
+        const filePath = path.join(folder, file);
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted file from ${folder}: ${filePath}`);
+        } catch (err) {
+          console.error(`Error deleting file from ${folder}: ${filePath}`, err);
+        }
       }
+      console.log(`${folder} folder emptied on server start.`);
+    } else {
+      console.log(`${folder} folder does not exist, skipping cleanup.`);
     }
-    console.log('Downloads folder emptied on server start.');
-  } else {
-    console.log('Downloads folder does not exist, skipping cleanup.');
-  }
+
+  })
 }
 
 
@@ -411,6 +416,8 @@ async function createFinalMontage(
       `[full_v]fade=t=out:st=${fadeStart}:d=2[faded_v];`,
       `[full_a]afade=t=out:st=${fadeStart}:d=2[faded_a]`
     ];
+
+    console.log("Final Montage render started!")
 
     command.complexFilter(filters.join(''))
       .outputOptions([
@@ -580,8 +587,8 @@ app.get('/areYouAlive', (req, res) => {
 // Server Initialization
 // --------------------------
 
-// Empty downloads folder on server start
-emptyDownloadsFolder();
+// Empty downloads, uploads folder on server start
+emptyFoldersOnInitialLoad();
 
 app.listen(PORT, () => {
   // console.log(`Montage server running on http://localhost:${PORT}`);
