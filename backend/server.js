@@ -22,14 +22,8 @@ const GCP_BUCKET_ID = process.env.GCP_BUCKET_ID;
 const GCP_REGION = 'us-central1';
 const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'assets', 'system-prompt.txt'), 'utf8');
 
-const whitelistedUrls = [
-  // 'http://localhost:5173',
-  'https://mlb-montage-maker.pages.dev',
-  'https://mlb-montage-maker.mehra.dev',
-]
 const app = express();
 app.set('case sensitive routing', false); // Add this line to disable case-sensitive routing
-app.use(cors({ origin: whitelistedUrls }));
 const geminiResponseCache = new Map();
 const modelGenerationConfig = {
   temperature: 0,
@@ -69,6 +63,26 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 // --------------------------
 // Middleware Configuration
 // --------------------------
+const whitelist = [
+  //  'http://localhost:5173',
+  //  'http://localhost:4173',
+  //  'https://mlb-montage-maker.pages.dev',
+  'https://mlb-montage-maker.mehra.dev',
+]
+const corsOptions = {
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  origin: whitelist,
+  // origin: function (origin, callback) {
+  //   if (whitelist.indexOf(origin) !== -1 || !origin) {
+  //     callback(null, true)
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'))
+  //   }
+  // }
+}
+app.use(cors(corsOptions));
 const upload = multer({
   storage: multer.diskStorage({
     destination: directories.uploads,
