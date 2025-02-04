@@ -1,6 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,13 +8,6 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { VertexAI } from '@google-cloud/vertexai';
 
-
-// Load environment variables
-// --------------------------
-const dotenvResult = dotenv.config(); // Load .env file
-if (dotenvResult.error) {
-  console.warn("Warning: .env file not found. Using environment variables directly or defaults.");
-}
 
 // --------------------------
 // Configuration & Constants
