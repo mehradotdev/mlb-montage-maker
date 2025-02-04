@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,6 +8,14 @@ import fs from 'node:fs';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { VertexAI } from '@google-cloud/vertexai';
+
+
+// Load environment variables
+// --------------------------
+const dotenvResult = dotenv.config(); // Load .env file
+if (dotenvResult.error) {
+  console.warn("Warning: .env file not found. Using environment variables directly or defaults.");
+}
 
 // --------------------------
 // Configuration & Constants
@@ -16,8 +25,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const FRAME_RATE = 59.94;
 const FRAME_DURATION = 1 / FRAME_RATE;
-const GCP_PROJECT_ID = 'mlb-montage-maker';
-const GCP_BUCKET_ID = 'mlb-montage-maker';
+const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
+const GCP_BUCKET_ID = process.env.GCP_BUCKET_ID;
 const GCP_REGION = 'us-central1';
 const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'assets', 'system-prompt.txt'), 'utf8');
 
@@ -35,6 +44,11 @@ const modelGenerationConfig = {
 // Initialize Vertex AI client
 const vertexAI = new VertexAI({ project: GCP_PROJECT_ID, location: GCP_REGION });
 const generativeModel = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp', systemInstruction: SYSTEM_PROMPT, generationConfig: modelGenerationConfig });
+
+if (!GCP_PROJECT_ID || !GCP_BUCKET_ID) {
+  console.error("Error: GCP_PROJECT_ID or GCP_BUCKET_ID environment variables are not set.");
+  process.exit(1); // Exit if essential GCP variables are missing
+}
 
 // Directory configuration
 const directories = {
@@ -359,7 +373,7 @@ async function createFinalMontage(
 
     // Build FFmpeg filter graph
     const filters = [
-       // First clip processing (video + audio from source)
+      // First clip processing (video + audio from source)
       // `[0:v]trim=start=${timeToSeconds(firstClip.start_timestamp)}:duration=${firstClipDuration},setpts=PTS-STARTPTS[first_v];`,
       // `[0:a]atrim=start=${timeToSeconds(firstClip.start_timestamp)}:duration=${firstClipDuration},asetpts=PTS-STARTPTS[first_a];`,
       // Temporary change start 1st clip at 0 seconds
