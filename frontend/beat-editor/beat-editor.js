@@ -62,7 +62,7 @@ const sampleSongData = {
     ],
     displayName: "Believe (Instrumental) - NEFFEX",
     filename: "believe.mp3",
-    audioSrc: "/music/believe.mp3",
+    audioSrc: "../music/believe.mp3",
   },
   "hows-it-supposed-to-feel": {
     reelRegion: { start: 0, end: 59.98 }, // Example Reel Region for "How's It Supposed to Feel" (adjust as needed)
@@ -78,7 +78,7 @@ const sampleSongData = {
     ],
     displayName: "How's It Supposed to Feel (Instrumental) - NEFFEX",
     filename: "hows-it-supposed-to-feel.mp3",
-    audioSrc: "/music/hows-it-supposed-to-feel.mp3",
+    audioSrc: "../music/hows-it-supposed-to-feel.mp3",
   },
 };
 // #endregion
@@ -444,7 +444,7 @@ generateMontageButton.addEventListener("click", async () => {
     }
 
     // Redirect to montage video page with runId
-    window.location.href = `/montage-viewer/?runId=${runId}`;
+    window.location.href = `../montage-viewer/?runId=${runId}`;
 
 
   } catch (error) {
