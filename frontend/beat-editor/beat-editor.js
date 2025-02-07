@@ -5,7 +5,7 @@ import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 // #region VARIABLES
 
-const FRAME_DURATION = 1 / 59.94; // ~0.016683 seconds per frame
+const FRAME_DURATION = 1 / 30; // ~0.0333 seconds per frame
 // const TOLERANCE_INTRVL = FRAME_DURATION;
 // const DUP_MARKER_THRESH = FRAME_DURATION;
 // const TOLERANCE_INTRVL = 0.01; // Tolerance interval in seconds for rounding and duplicate checking
@@ -65,7 +65,7 @@ const sampleSongData = {
     audioSrc: "../music/believe.ogg",
   },
   "hows-it-supposed-to-feel": {
-    reelRegion: { start: 0, end: 59.98 }, // Example Reel Region for "How's It Supposed to Feel" (adjust as needed)
+    reelRegion: { start: 0, end: 60 }, // Example Reel Region for "How's It Supposed to Feel" (adjust as needed)
     beatMarkers: [
       2.1, 4.2, 6.25, 8.36, 10.5, 11.41, 11.65, 12.58, 14.62, 16.7, 18.69, 19.76,
       19.98, 22.4, 25, 25.47, 26.14, 26.68, 27.21, 27.73, 28.19, 28.74, 29.27,

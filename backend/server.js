@@ -15,7 +15,7 @@ import { VertexAI } from '@google-cloud/vertexai';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.PORT || 3000;
-const FRAME_RATE = 59.94;
+const FRAME_RATE = 30;
 const FRAME_DURATION = 1 / FRAME_RATE;
 const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
 const GCP_BUCKET_ID = process.env.GCP_BUCKET_ID;
@@ -280,44 +280,33 @@ function emptyFoldersOnInitialLoad() {
 // --------------------------
 
 /**
- * Creates final montage video with audio synchronization
- * @param {string} sourcePath - Path to source video
- * @param {string} audioPath - Path to audio track
- * @param {number[]} intervals - Array of clip durations (in seconds)
- * @param {object[]} clipsData - Video clip metadata
- * @param {object} firstClip - First clip configuration
- * @param {object} lastClip - Last clip configuration
- * @param {string} outputPath - Output file path
- * @param {number} alignedStart - Start time in seconds
- * @param {number} alignedEnd - End time in seconds
+ * Creates final montage video with audio synchronization.
+ * @param {string} sourcePath - Path to source video.
+ * @param {string} audioPath - Path to audio track.
+ * @param {number[]} intervals - Array of clip durations (in seconds).
+ * @param {object[]} clipsData - Video clip metadata.
+ * @param {string} outputPath - Output file path.
+ * @param {number} alignedStart - Start time in seconds.
+ * @param {number} alignedEnd - End time in seconds.
  */
 async function createFinalMontage(
   sourcePath,
   audioPath,
   intervals,
   clipsData,
-  firstClip,
-  lastClip,
   outputPath,
   alignedStart,
   alignedEnd
 ) {
+  // Calculate the duration for the montage (audio and video)
   const montageDuration = alignedEnd - alignedStart;
+  // Fade will start 2 seconds before the end of the montage
+  const fadeStart = Math.max(0, montageDuration - 2); // Start fade 2 seconds before end
 
-  // Calculate clip durations for first and last clips
-  // const firstClipDuration = timeToSeconds(firstClip.end_timestamp) - timeToSeconds(firstClip.start_timestamp); // temporary disable
-  // const lastClipDuration = timeToSeconds(lastClip.end_timestamp) - timeToSeconds(lastClip.start_timestamp); // temporary disable
-  const firstClipDuration = 0.1; // 1st clip duration
-  const lastClipDuration = 0.05; // last clip duration
-  const totalDuration = firstClipDuration + montageDuration + lastClipDuration;
-  const fadeStart = Math.max(0, totalDuration - 2); // Start fade 2 seconds before end
-
-  // ********************************************
-  // New Montage Clips Processing Logic Start Here
-  // ********************************************
-
-  // Create a working copy of clipsData
-  // Each working clip holds its original start time, current start time (both in seconds), and end time.
+  // ------------------------------------------------------
+  // Process montage segments using clipsData & round-robin
+  // ------------------------------------------------------
+  // Build a working copy of clipsData with start and end times in seconds.
   const workingClips = clipsData.map(clip => {
     const origStart = timeToSeconds(clip.start_timestamp);
     return {
@@ -327,9 +316,9 @@ async function createFinalMontage(
     };
   });
 
-  // This array will hold all the segment filter strings
+  // This array will hold all the segment filter strings for FFmpeg.
   const montageClipFilters = [];
-  let segmentCounter = 0; // used to name each segment filter ([mv0], [mv1], …)
+  let segmentCounter = 0; // used to number each segment filter (e.g., [mv0], [mv1], …)
   let clipIndex = 0; // used for round-robin selection of clips
 
   // Process each interval (each interval is the total time that must be filled)
@@ -339,8 +328,7 @@ async function createFinalMontage(
     while (remainingInterval > 0) {
       // Select the next clip in round-robin order
       const currentClip = workingClips[clipIndex % workingClips.length];
-
-      // Calculate how much time is available from this clip
+      // Determine how much time is available in the current clip.
       let available = currentClip.end - currentClip.currentStart;
 
       // If the clip is exhausted, reset its currentStart back to its original start.
@@ -378,10 +366,9 @@ async function createFinalMontage(
   }
   const montageConcatFilter = `${montageInputs.join('')}concat=n=${segmentCounter}:v=1:a=0[montage_v];`;
 
-  // ********************************************
-  // New Montage Clips Processing Logic End Here
-  // ********************************************
-
+  // ------------------------------------------------------
+  // Build and execute the FFmpeg command
+  // ------------------------------------------------------
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
       .input(sourcePath)
@@ -389,40 +376,23 @@ async function createFinalMontage(
 
     // Build FFmpeg filter graph
     const filters = [
-      // First clip processing (video + audio from source)
-      // `[0:v]trim=start=${timeToSeconds(firstClip.start_timestamp)}:duration=${firstClipDuration},setpts=PTS-STARTPTS[first_v];`,
-      // `[0:a]atrim=start=${timeToSeconds(firstClip.start_timestamp)}:duration=${firstClipDuration},asetpts=PTS-STARTPTS[first_a];`,
-      // Temporary change start 1st clip at 0 seconds
-      `[0:v]trim=start=${timeToSeconds(0)}:duration=${firstClipDuration},setpts=PTS-STARTPTS[first_v];`,
-      `[0:a]atrim=start=${timeToSeconds(0)}:duration=${firstClipDuration},asetpts=PTS-STARTPTS[first_a];`,
-
-      // Last clip processing (video + audio from source)
-      `[0:v]trim=start=${timeToSeconds(lastClip.start_timestamp)}:duration=${lastClipDuration},setpts=PTS-STARTPTS[last_v];`,
-      `[0:a]atrim=start=${timeToSeconds(lastClip.start_timestamp)}:duration=${lastClipDuration},asetpts=PTS-STARTPTS[last_a];`,
-
-      // Insert all montage clip segment filters (generated above)
+      // Add all montage segment filters.
       ...montageClipFilters,
-
-      // Insert the montage concat filter
+      // Concatenate the segments into one video stream.
       montageConcatFilter,
-
-      // Process audio track
+      // Process the audio track: trim it to the montage duration.
       `[1:a]atrim=start=${alignedStart}:duration=${montageDuration},asetpts=PTS-STARTPTS[montage_a];`,
-
-      // Final concatenation with proper audio mapping
-      `[first_v][first_a] [montage_v][montage_a] [last_v][last_a] concat=n=3:v=1:a=1[full_v][full_a];`,
-
-      // Add video and audio fade-out to black at the end
-      `[full_v]fade=t=out:st=${fadeStart}:d=2[faded_v];`,
-      `[full_a]afade=t=out:st=${fadeStart}:d=2[faded_a]`
+      // Add fade-out effects to both video and audio.
+      `[montage_v]fade=t=out:st=${fadeStart}:d=2[faded_v];`,
+      `[montage_a]afade=t=out:st=${fadeStart}:d=2[faded_a]`
     ];
 
-    console.log("Final Montage render started!")
+    console.log("Final Montage render started!");
 
     command.complexFilter(filters.join(''))
       .outputOptions([
-        '-map', '[faded_v]',  // Use faded video stream
-        '-map', '[faded_a]',  // Existing audio stream
+        '-map', '[faded_v]',  // Map faded video stream
+        '-map', '[faded_a]',  // Map faded audio stream
         '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
         '-c:a', 'aac', '-b:a', '128k',
         '-movflags', '+faststart'
@@ -483,23 +453,15 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
       try {
         updateRunStatus(runId, 'processing', 10, 'Analyzing video...');
         const geminiResponseData = await callGeminiAPI(sourceVideoGCSUrl);
-        const intervals = calculateBeatIntervals(beatMarkers, reelRegion);
-
-        updateRunStatus(runId, 'processing', 70, 'Rendering montage...');
-        const [firstClip, ...restClips] = JSON.parse(geminiResponseData);
-        const lastClip = restClips.pop();
-
-        // temporary disable 1st and last clip functionality
-        // const clipsData = restClips;
         const clipsData = JSON.parse(geminiResponseData);
+        const intervals = calculateBeatIntervals(beatMarkers, reelRegion);
+        updateRunStatus(runId, 'processing', 70, 'Rendering montage...');
 
         await createFinalMontage(
           sourceVideo,
           audioPath,
           intervals,
           clipsData,
-          firstClip,
-          lastClip,
           outputPath,
           alignToFrames(reelRegion.start),
           alignToFrames(reelRegion.end)
