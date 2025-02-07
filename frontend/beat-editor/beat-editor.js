@@ -61,8 +61,8 @@ const sampleSongData = {
       71.19, 71.65, 72.09, 75.93, 80.04, 84.01
     ],
     displayName: "Believe (Instrumental) - NEFFEX",
-    filename: "believe.mp3",
-    audioSrc: "../music/believe.mp3",
+    filename: "believe.ogg",
+    audioSrc: "../music/believe.ogg",
   },
   "hows-it-supposed-to-feel": {
     reelRegion: { start: 0, end: 59.98 }, // Example Reel Region for "How's It Supposed to Feel" (adjust as needed)
@@ -77,8 +77,8 @@ const sampleSongData = {
       57.92, 58.41
     ],
     displayName: "How's It Supposed to Feel (Instrumental) - NEFFEX",
-    filename: "hows-it-supposed-to-feel.mp3",
-    audioSrc: "../music/hows-it-supposed-to-feel.mp3",
+    filename: "hows-it-supposed-to-feel.ogg",
+    audioSrc: "../music/hows-it-supposed-to-feel.ogg",
   },
 };
 // #endregion
