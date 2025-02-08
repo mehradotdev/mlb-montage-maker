@@ -7,19 +7,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MLB Montage Make - Montage Viewer</title>
   <link rel="stylesheet" href="../assetz/styles/global-style.css">
+  <script type="module">
+    import { POSTHOG_PROJECT_KEY, BACKEND_ENDPOINT } from '../main.js';
+    import posthog from 'posthog-js';
+
+    posthog.init(POSTHOG_PROJECT_KEY,
+      {
+        api_host: `${BACKEND_ENDPOINT}/ingest`,
+        ui_host: 'https://eu.posthog.com',
+      }
+    )
+  </script>
 </head>
 
 <body class="montageVideo">
   <div class="container">
-    <h1 id="montageTitle">Generating Your Baseball Montage!</h1>  <!-- Added ID here -->
-  
+    <h1 id="montageTitle">Generating Your Baseball Montage!</h1> <!-- Added ID here -->
+
     <p id="videoDeletionWarning" style="display: none;"></p>
 
     <div id="videoPlaceholder">
       <div id="generatingOverlay">
         <div class="loader"></div>
         <p id="progressMessage">Initializing montage creation...</p>
-        <p id="montageProgressLvlDisplay" style="display: none;">Montage progress: 0% completed...</p> <!-- Progress display -->
+        <!-- Progress display -->
+        <p id="montageProgressLvlDisplay" style="display: none;">Montage progress: 0% completed...</p>
         <p id="encouragingMessage"></p>
       </div>
       <video id="montageVideoPlayer" controls style="display: none;"></video>
@@ -29,7 +41,7 @@
       <a id="downloadButton" href="#" style="display: none;" target="_blank" download="baseball_montage.mp4">Download Montage ⏬</a> <!-- Download button -->
       <button id="newMontageButton" style="display: none;">Make Another 🔥 Montage?</button> <!-- New Montage Button -->
     </div>
-  
+
     <div id="errorDisplay" style="display: none;"></div>
   </div>
 

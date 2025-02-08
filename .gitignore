@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+mlb-montage-maker-7c9cad8b1bc9.json
+backend/.env
 dist
 dist-ssr
 *.local

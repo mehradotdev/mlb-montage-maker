@@ -20,6 +20,17 @@
       font-size: xx-large;
     }
   </style>
+  <script type="module">
+    import { POSTHOG_PROJECT_KEY, BACKEND_ENDPOINT } from './main.js';
+    import posthog from 'posthog-js';
+
+    posthog.init(POSTHOG_PROJECT_KEY,
+      {
+        api_host: `${BACKEND_ENDPOINT}/ingest`,
+        ui_host: 'https://eu.posthog.com',
+      }
+    )
+  </script>
 </head>
 
 <body class="index">

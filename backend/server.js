@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import cors from 'cors';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +22,8 @@ const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
 const GCP_BUCKET_ID = process.env.GCP_BUCKET_ID;
 const GCP_REGION = 'us-central1';
 const SYSTEM_PROMPT = fs.readFileSync(path.join(__dirname, 'assets', 'system-prompt.txt'), 'utf8');
+const POSTHOG_API_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_ASSETS_HOST = 'https://eu-assets.i.posthog.com';
 
 const app = express();
 app.set('case sensitive routing', false); // Add this line to disable case-sensitive routing
@@ -486,7 +489,6 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
   }
 });
 
-
 app.get('/montageStatus', (req, res) => {
   const runId = req.query.runId;
 
@@ -539,11 +541,28 @@ app.get('/getVideo', (req, res) => {
   });
 });
 
-
 app.get('/areYouAlive', (req, res) => {
   res.json({ message: "Yes!, alive and well! 😁" });
 });
 
+// Proxy middleware for /ingest and /decide endpoints
+app.use('/ingest/static', createProxyMiddleware({
+  target: `${POSTHOG_ASSETS_HOST}/static`,
+  changeOrigin: true, // Required for some proxy setups
+  //  logger: console,
+}));
+
+app.use('/ingest/decide', createProxyMiddleware({
+  target: `${POSTHOG_API_HOST}/decide`,
+  changeOrigin: true,
+  //  logger: console,
+}));
+
+app.use('/ingest', createProxyMiddleware({
+  target: `${POSTHOG_API_HOST}`,
+  changeOrigin: true,
+  //  logger: console,
+}));
 
 // --------------------------
 // Server Initialization
