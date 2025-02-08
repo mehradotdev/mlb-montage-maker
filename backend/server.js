@@ -9,7 +9,6 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import { VertexAI } from '@google-cloud/vertexai';
 
-
 // --------------------------
 // Configuration & Constants
 // --------------------------
@@ -26,7 +25,7 @@ const POSTHOG_API_HOST = 'https://eu.i.posthog.com';
 const POSTHOG_ASSETS_HOST = 'https://eu-assets.i.posthog.com';
 
 const app = express();
-app.set('case sensitive routing', false); // Add this line to disable case-sensitive routing
+app.set('case sensitive routing', false); // disable case-sensitive routing
 const geminiResponseCache = new Map();
 const modelGenerationConfig = {
   temperature: 0,
@@ -38,7 +37,11 @@ const modelGenerationConfig = {
 
 // Initialize Vertex AI client
 const vertexAI = new VertexAI({ project: GCP_PROJECT_ID, location: GCP_REGION });
-const generativeModel = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp', systemInstruction: SYSTEM_PROMPT, generationConfig: modelGenerationConfig });
+const generativeModel = vertexAI.getGenerativeModel({
+  model: 'gemini-2.0-flash-exp',
+  systemInstruction: SYSTEM_PROMPT,
+  generationConfig: modelGenerationConfig,
+});
 
 if (!GCP_PROJECT_ID || !GCP_BUCKET_ID) {
   console.error("Error: GCP_PROJECT_ID or GCP_BUCKET_ID environment variables are not set.");
@@ -67,11 +70,11 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 // Middleware Configuration
 // --------------------------
 const whitelist = [
-  //  'http://localhost:5173',
-  //  'http://localhost:4173',
-  //  'https://mlb-montage-maker.pages.dev',
+  // 'http://localhost:5173',
+  // 'http://localhost:4173',
+  // 'https://mlb-montage-maker.pages.dev',
   'https://mlb-montage-maker.mehra.dev',
-]
+];
 const corsOptions = {
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
@@ -95,7 +98,8 @@ const upload = multer({
       cb(null, uniqueName);
     }
   }),
-  fileFilter: (req, file, cb) => file.mimetype.startsWith('audio/') ? cb(null, true) : cb(null, false),
+  fileFilter: (req, file, cb) =>
+    file.mimetype.startsWith('audio/') ? cb(null, true) : cb(null, false),
   limits: { fileSize: 100 * 1024 * 1024 },
 });
 
@@ -176,6 +180,36 @@ const timeToSeconds = (timestamp) => {
 };
 
 /**
+ * Converts seconds to a timestamp string in HH:MM:SS format.
+ * @param {number} seconds - Time in seconds.
+ * @returns {string} Timestamp in HH:MM:SS format.
+ */
+function secondsToTimestamp(seconds) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
+/**
+ * Uses ffmpeg.ffprobe to calculate the duration of the source video.
+ * @param {string} sourcePath - Path to the source video.
+ * @returns {Promise<number>} Duration of the video in seconds.
+ */
+function getVideoDuration(sourcePath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(sourcePath, (err, metadata) => {
+      if (err) return reject(err);
+      if (!metadata || !metadata.format || !metadata.format.duration) {
+        return reject(new Error("Could not determine video duration"));
+      }
+      resolve(metadata.format.duration);
+    });
+  });
+}
+
+/**
  * Aligns time to nearest frame boundary.
  * @param {number} seconds - Input time in seconds.
  * @returns {number} Frame-aligned time in seconds.
@@ -207,6 +241,66 @@ function calculateBeatIntervals(beatMarkers, reelRegion) {
     intervals.push(alignedEnd - previousBeat);
   }
   return intervals;
+}
+
+/**
+ * Processes and validates the clips data from Gemini API.
+ * If the JSON is invalid or not an array, returns a fallback clip covering the entire source video.
+ * If valid, filters out clip objects with invalid timestamps.
+ *
+ * @param {string} geminiResponseData - JSON string from Gemini API.
+ * @param {number} sourceDuration - Duration of the source video in seconds.
+ * @returns {object[]} Array of validated clip objects.
+ */
+function processAndValidateClips(geminiResponseData, sourceDuration) {
+  let clipsArray;
+  try {
+    clipsArray = JSON.parse(geminiResponseData);
+    if (!Array.isArray(clipsArray)) {
+      throw new Error("Parsed data is not an array");
+    }
+  } catch (e) {
+    console.warn("Invalid Gemini response JSON. Falling back to a default clip. Error:", e.message);
+    return [{
+      start_timestamp: secondsToTimestamp(0),
+      end_timestamp: secondsToTimestamp(sourceDuration),
+      description: "Fallback clip covering the entire source video."
+    }];
+  }
+
+  const validClips = clipsArray.filter((clip) => {
+    if (!clip.start_timestamp || !clip.end_timestamp) {
+      console.warn("Clip missing timestamps:", clip);
+      return false;
+    }
+    const startSec = timeToSeconds(clip.start_timestamp);
+    const endSec = timeToSeconds(clip.end_timestamp);
+    if (isNaN(startSec) || isNaN(endSec)) {
+      console.warn("Clip has invalid timestamp format:", clip);
+      return false;
+    }
+    if (startSec < 0 || endSec < 0 || startSec >= endSec) {
+      console.warn("Clip has non-sensical timestamps:", clip);
+      return false;
+    }
+    // Ensure clip is within source video bounds.
+    if (startSec < 0 || endSec > sourceDuration) {
+      console.warn("Clip timestamps are out of source video bounds:", clip);
+      return false;
+    }
+    return true;
+  });
+
+  if (validClips.length === 0) {
+    console.warn("No valid clips found after filtering. Using fallback clip.");
+    return [{
+      start_timestamp: secondsToTimestamp(0),
+      end_timestamp: secondsToTimestamp(sourceDuration),
+      description: "Fallback clip covering the entire video."
+    }];
+  }
+
+  return validClips;
 }
 
 /**
@@ -273,10 +367,8 @@ function emptyFoldersOnInitialLoad() {
     } else {
       console.log(`${folder} folder does not exist, skipping cleanup.`);
     }
-
-  })
+  });
 }
-
 
 // --------------------------
 // Video Processing Functions
@@ -409,7 +501,6 @@ async function createFinalMontage(
   });
 }
 
-
 // --------------------------
 // API Endpoints
 // --------------------------
@@ -456,9 +547,15 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
       try {
         updateRunStatus(runId, 'processing', 10, 'Analyzing video...');
         const geminiResponseData = await callGeminiAPI(sourceVideoGCSUrl);
-        const clipsData = JSON.parse(geminiResponseData);
-        const intervals = calculateBeatIntervals(beatMarkers, reelRegion);
+        const sourceDuration = await getVideoDuration(sourceVideo); // calculate the source video's duration.
         updateRunStatus(runId, 'processing', 70, 'Rendering montage...');
+
+        // --- VALIDATE RESPONSE ---
+        // Instead of directly parsing geminiResponseData, we now call processAndValidateClips.
+        // If geminiResponseData is not valid JSON or not an array, this function returns a fallback clip
+        // covering the entire source video. If it is a valid JSON array, it will filter out any invalid clip objects.
+        const clipsData = processAndValidateClips(geminiResponseData, sourceDuration);
+        const intervals = calculateBeatIntervals(beatMarkers, reelRegion);
 
         await createFinalMontage(
           sourceVideo,
@@ -472,7 +569,6 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
 
         updateRunStatus(runId, 'completed', 100, 'Montage creation completed!', outputPath); // Passing outputPath
         console.log(`Montage generation completed successfully for runId: ${runId}`);
-
       } catch (error) {
         console.error(`Error during background montage generation for runId ${runId}:`, error);
         updateRunStatus(runId, 'failed', 0, 'Montage generation failed. Please check server logs.');
@@ -548,20 +644,17 @@ app.get('/areYouAlive', (req, res) => {
 // Proxy middleware for /ingest and /decide endpoints
 app.use('/ingest/static', createProxyMiddleware({
   target: `${POSTHOG_ASSETS_HOST}/static`,
-  changeOrigin: true, // Required for some proxy setups
-  //  logger: console,
+  changeOrigin: true,
 }));
 
 app.use('/ingest/decide', createProxyMiddleware({
   target: `${POSTHOG_API_HOST}/decide`,
   changeOrigin: true,
-  //  logger: console,
 }));
 
 app.use('/ingest', createProxyMiddleware({
   target: `${POSTHOG_API_HOST}`,
   changeOrigin: true,
-  //  logger: console,
 }));
 
 // --------------------------
@@ -572,6 +665,5 @@ app.use('/ingest', createProxyMiddleware({
 emptyFoldersOnInitialLoad();
 
 app.listen(PORT, () => {
-  // console.log(`Montage server running on http://localhost:${PORT}`);
   console.log(`Montage server running on port ${PORT}`);
 });
