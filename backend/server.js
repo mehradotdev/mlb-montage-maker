@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import { VertexAI } from '@google-cloud/vertexai';
 
 // --------------------------
@@ -65,6 +66,7 @@ Object.entries(directories).forEach(([name, dirPath]) => {
 
 // Configure FFmpeg path
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 // --------------------------
 // Middleware Configuration
