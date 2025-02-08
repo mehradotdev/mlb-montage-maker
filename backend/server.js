@@ -28,7 +28,7 @@ const app = express();
 app.set('case sensitive routing', false); // disable case-sensitive routing
 const geminiResponseCache = new Map();
 const modelGenerationConfig = {
-  temperature: 0,
+  temperature: 0.7,
   topP: 0.95,
   topK: 40,
   maxOutputTokens: 8192,
@@ -128,10 +128,11 @@ function validateMontageRequest(req) {
 /**
  * Calls the Gemini API to analyze the video.
  * @param {string} videoUrl - GCS URL of the video.
+ * @param {number} videoDuration - Duration of the video in seconds.
  * @returns {Promise<string>} - Gemini API response text.
  */
-async function callGeminiAPI(videoUrl) {
-  console.log("Calling Gemini API for video from GCS URL:", videoUrl);
+async function callGeminiAPI(videoUrl, videoDuration) {
+  console.log(`Calling Gemini API for video from GCS URL: ${videoUrl}, Duration: ${videoDuration} seconds`);
 
   if (geminiResponseCache.has(videoUrl)) {
     console.log("Cache hit! Returning cached Gemini API response.");
@@ -144,7 +145,12 @@ async function callGeminiAPI(videoUrl) {
         role: 'user',
         parts: [
           { fileData: { fileUri: videoUrl, mimeType: 'video/mp4' } },
-          { text: "Analyze this video and identify key moments with timestamps and descriptions." },
+          {
+            text: `Analyze this baseball game video and identify key moments.
+            Provide the start and end timestamps of each key moment in seconds (integer format).
+            Ensure all timestamps are within the video's duration, which is ${videoDuration} seconds.
+            Include a brief description and reason for each key moment. Output the results as a JSON array.`
+          },
         ],
       }],
     };
@@ -167,29 +173,6 @@ async function callGeminiAPI(videoUrl) {
     console.error("Error calling Gemini API:", error);
     throw error;
   }
-}
-
-/**
- * Converts timestamp string to total seconds.
- * @param {string} timestamp - Format: HH:MM:SS
- * @returns {number} Total seconds.
- */
-const timeToSeconds = (timestamp) => {
-  const [hours, minutes, seconds] = (timestamp || '00:00:00').split(':').map(Number);
-  return hours * 3600 + minutes * 60 + seconds;
-};
-
-/**
- * Converts seconds to a timestamp string in HH:MM:SS format.
- * @param {number} seconds - Time in seconds.
- * @returns {string} Timestamp in HH:MM:SS format.
- */
-function secondsToTimestamp(seconds) {
-  const pad = (n) => String(n).padStart(2, '0');
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
 }
 
 /**
@@ -262,8 +245,8 @@ function processAndValidateClips(geminiResponseData, sourceDuration) {
   } catch (e) {
     console.warn("Invalid Gemini response JSON. Falling back to a default clip. Error:", e.message);
     return [{
-      start_timestamp: secondsToTimestamp(0),
-      end_timestamp: secondsToTimestamp(sourceDuration),
+      start_timestamp: 0,
+      end_timestamp: sourceDuration,
       description: "Fallback clip covering the entire source video."
     }];
   }
@@ -273,10 +256,11 @@ function processAndValidateClips(geminiResponseData, sourceDuration) {
       console.warn("Clip missing timestamps:", clip);
       return false;
     }
-    const startSec = timeToSeconds(clip.start_timestamp);
-    const endSec = timeToSeconds(clip.end_timestamp);
+    const startSec = Number(clip.start_timestamp);
+    const endSec = Number(clip.end_timestamp);
+
     if (isNaN(startSec) || isNaN(endSec)) {
-      console.warn("Clip has invalid timestamp format:", clip);
+      console.warn("Clip has invalid timestamp format (not a number):", clip);
       return false;
     }
     if (startSec < 0 || endSec < 0 || startSec >= endSec) {
@@ -294,8 +278,8 @@ function processAndValidateClips(geminiResponseData, sourceDuration) {
   if (validClips.length === 0) {
     console.warn("No valid clips found after filtering. Using fallback clip.");
     return [{
-      start_timestamp: secondsToTimestamp(0),
-      end_timestamp: secondsToTimestamp(sourceDuration),
+      start_timestamp: 0,
+      end_timestamp: sourceDuration,
       description: "Fallback clip covering the entire video."
     }];
   }
@@ -403,11 +387,10 @@ async function createFinalMontage(
   // ------------------------------------------------------
   // Build a working copy of clipsData with start and end times in seconds.
   const workingClips = clipsData.map(clip => {
-    const origStart = timeToSeconds(clip.start_timestamp);
     return {
-      origStart,
-      currentStart: origStart,
-      end: timeToSeconds(clip.end_timestamp)
+      origStart: Number(clip.start_timestamp),
+      currentStart: Number(clip.start_timestamp),
+      end: Number(clip.end_timestamp)
     };
   });
 
@@ -546,8 +529,8 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
     setTimeout(async () => {
       try {
         updateRunStatus(runId, 'processing', 10, 'Analyzing video...');
-        const geminiResponseData = await callGeminiAPI(sourceVideoGCSUrl);
         const sourceDuration = await getVideoDuration(sourceVideo); // calculate the source video's duration.
+        const geminiResponseData = await callGeminiAPI(sourceVideoGCSUrl, sourceDuration);
         updateRunStatus(runId, 'processing', 70, 'Rendering montage...');
 
         // --- VALIDATE RESPONSE ---
