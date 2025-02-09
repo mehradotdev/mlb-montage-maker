@@ -71,12 +71,21 @@ ffmpeg.setFfprobePath(ffprobeInstaller.path);
 // --------------------------
 // Middleware Configuration
 // --------------------------
-const whitelist = [
-  // 'http://localhost:5173',
-  // 'http://localhost:4173',
-  // 'https://mlb-montage-maker.pages.dev',
-  'https://mlb-montage-maker.mehra.dev',
-];
+let whitelist;
+
+if (process.env.NODE_ENV === 'production') { // production environment
+  whitelist = [
+    'https://mlb-montage-maker.mehra.dev',
+  ];
+  console.log("CORS whitelist (production):", whitelist);
+} else { // Development environment
+  whitelist = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+  ];
+  console.log("CORS whitelist (development):", whitelist);
+}
+
 const corsOptions = {
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
@@ -84,14 +93,14 @@ const corsOptions = {
   origin: whitelist,
   // origin: function (origin, callback) {
   //   if (whitelist.indexOf(origin) !== -1 || !origin) {
-  //     callback(null, true)
+  //     callback(null, true);
   //   } else {
-  //     callback(new Error('Not allowed by CORS'))
+  //     callback(new Error('Not allowed by CORS'));
   //   }
   // }
-}
-// app.use(cors(corsOptions));
-app.use(cors());
+};
+app.use(cors(corsOptions));
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: directories.uploads,
@@ -495,6 +504,17 @@ app.post('/initMontageCreation', upload.single('audioFile'), async (req, res) =>
   let outputPath; // Output path for the montage
 
   try {
+    const requestOrigin = req.headers.origin;
+    const isOriginAllowed = whitelist.includes(requestOrigin); // Check if origin is in whitelist
+
+    if (!isOriginAllowed) {
+      console.warn(`CORS blocked request from origin: ${requestOrigin}`);
+      return res.status(403).json({ // 403 Forbidden
+        status: 'error',
+        message: 'CORS origin check failed. Request blocked by server.',
+      });
+    }
+
     const montageData = validateMontageRequest(req);
     if (!montageData) {
       return res.status(400).json({ status: 'error', message: 'Invalid montage data provided.' });
