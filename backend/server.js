@@ -39,7 +39,7 @@ const modelGenerationConfig = {
 // Initialize Vertex AI client
 const vertexAI = new VertexAI({ project: GCP_PROJECT_ID, location: GCP_REGION });
 const generativeModel = vertexAI.getGenerativeModel({
-  model: 'gemini-2.0-flash-exp',
+  model: 'gemini-2.0-flash',
   systemInstruction: SYSTEM_PROMPT,
   generationConfig: modelGenerationConfig,
 });
